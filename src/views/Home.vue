@@ -99,7 +99,7 @@
           size="64"
         ></v-progress-circular>
       </v-overlay>
-      <v-col xl="3" lg="3" md="4" sm="6" xs="12" v-for="(item, i) in search_results" :key="i">
+      <v-col xl="3" lg="3" md="3" sm="6" xs="12" v-for="(item, i) in search_results" :key="i">
         <v-hover v-slot="{ isHovering, props }">
           <div class="text-end">
             <v-btn
