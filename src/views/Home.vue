@@ -154,7 +154,7 @@ export default {
     overlay: false,
     search_input:'',
     year: [2000,2023],
-    search_type: 'all',
+    search_type: '',
     items: ['recipe with chicken', 'best hiking trails near me', 'how to learn a new language'],
     variants: ['elevated', 'flat', 'tonal', 'outlined'],
     options: [],
