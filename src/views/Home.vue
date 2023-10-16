@@ -7,65 +7,41 @@
         <p class="text-h5 text-amber-accent-1t">Information Retrieval Systems</p>
       </div>
     </v-row>
-    <v-row align="center" justify="center" class="pa-3 w-100 mt-6">
-      <v-responsive max-width="580">
-        <v-combobox
-          v-model="search_input"
-          class="flex-full-width"
-          append-inner-icon="mdi-arrow-right"
-          clearable
-          hide-details
-          :disabled="options.length === 0"
-          @keyup.enter="search(search_input, year, search_type, options)"
-          @click:append-inner="search(search_input, year, search_type, options)"
-          :prepend-inner-icon="
-             options.length > 1 ? 'mdi-magnify'
-            :options.includes('1') ? 'mdi-account-edit'
-            :options.includes('0') ? 'mdi-format-title'
-            :options.includes('2') ? 'mdi-calendar'
-            : ''"
-          :search-input.sync="search_input"
-          color="blue"
-          menu-icon=""
-          placeholder="Search through documents, authors, years ..."
-          variant="underlined"
-        />
-      </v-responsive>
-    </v-row>
-    <v-row align="center" justify="center" class="pa-3 w-100 mt-0">
+    <v-row align="center" justify="center" class="pa-3 mt-6 w-100 mt-0">
       <div>
         <v-chip-group
-          v-model="options"
-          class="justify-center d-inline-block"
-          color="blue"
-          multiple
+            v-model="options"
+            class="justify-center d-inline-block"
+            color="blue"
+            multiple
         >
           <v-chip
-            filter
-            value="0"
-            variant="outlined"
+              filter
+              value="0"
+              variant="outlined"
           >
             Title
           </v-chip>
           <v-chip
-            filter
-            value="1"
-            variant="outlined"
+              filter
+              value="1"
+              variant="outlined"
           >
             Author
           </v-chip>
           <v-chip
-            filter
-            class=""
-            value="2"
-            variant="outlined"
+              filter
+              class=""
+              value="2"
+              variant="outlined"
           >
             Date
           </v-chip>
         </v-chip-group>
       </div>
       <div class="overflow-visible mb-1">
-        <VueDatePicker @keyup.enter="search(search_input, year, options)"
+        <VueDatePicker @closed="search(search_input, author_input, year, search_type, options)"
+                       @cleared="search(search_input, author_input, null, search_type, options)"
                        :disabled="!options.includes('2')"
                        class="py-1 pb-2 "
                        range
@@ -75,19 +51,59 @@
       </div>
       <div>
         <v-select
-          variant="outlined"
-          hide-details
-          density="compact"
-          v-model="search_type"
-          color="blue"
-          class="mx-2 smaller mb-2"
-          rounded
-          style="width: 155px; font-size: 10rem; padding: 0px;"
-          :items="['', 'book', 'www', 'article', 'inproceedings', 'proceedings', 'phdthesis', 'incollection']"
+            variant="outlined"
+            density="compact"
+            hint="type"
+            placeholder="type"
+            persistent-placeholder
+            v-model="search_type"
+            color="blue"
+            class="mx-2 mt-3 smaller"
+            rounded
+            @update:modelValue="search(search_input, author_input, year, search_type, options)"
+            style="width: 155px; font-size: 10rem; padding: 0px;"
+            :items="['all', 'book', 'www', 'article', 'inproceedings', 'proceedings', 'phdthesis', 'incollection']"
         ></v-select>
       </div>
     </v-row>
-    <v-row align="start" justify="start" class="pa-3 mt-3 fill-height">
+    <v-row align="center" justify="center" class="pa-3 pt-0 mt-0 mb-3 w-100">
+      <v-responsive max-width="580">
+        <v-combobox
+          v-model="search_input"
+          class="flex-full-width d-inline-block"
+          :class="options.includes('1') ? 'w-50' : 'w-100'"
+          v-if="options.includes('0')"
+          :append-inner-icon="!options.includes('1') ? 'mdi-arrow-right' : ''"
+          clearable
+          hide-details
+          @click:append-inner="search(search_input, '', year, search_type, options)"
+          prepend-inner-icon='mdi-format-title'
+          :search-input.sync="search_input"
+          color="blue"
+          menu-icon=""
+          placeholder="Search through titles"
+          variant="underlined"
+        />
+        <v-combobox
+            v-model="author_input"
+            class="d-inline-block"
+            :class="options.includes('0') ? 'w-50' : 'w-100'"
+            :append-inner-icon="options.includes('1') ? 'mdi-arrow-right' : ''"
+            clearable
+            hide-details
+            v-if="options.includes('1')"
+            @click:append-inner="search(search_input, author_input, year, search_type, options)"
+            prepend-inner-icon='mdi-account-edit'
+            :search-input.sync="search_input"
+            color="blue"
+            menu-icon=""
+            placeholder="Search through authors"
+            variant="underlined"
+        />
+      </v-responsive>
+    </v-row>
+
+    <v-row align="start" justify="start" class="pa-3 fill-height">
       <v-overlay
         :model-value="overlay"
         persistent
@@ -153,9 +169,9 @@ export default {
   data: () => ({
     overlay: false,
     search_input:'',
+    author_input: '',
     year: [2000,2023],
-    search_type: '',
-    items: ['recipe with chicken', 'best hiking trails near me', 'how to learn a new language'],
+    search_type: 'all',
     variants: ['elevated', 'flat', 'tonal', 'outlined'],
     options: [],
     search_results: [],
@@ -167,15 +183,19 @@ export default {
     }
   },
   methods:{
-    search: function(search_input, year, search_type, options){
+    search: function(search_input, author_input, year, search_type, options){
       this.overlay = true
+
+      if(search_type === 'all') {
+        search_type = ''
+      }
 
       let params = {
         'Title': options.includes('0') ? search_input : null,
-        'Author': options.includes('1') ? search_input : null,
+        'Author': options.includes('1') ? author_input : null,
         'type': search_type,
-        'YearFrom': options.includes('2') ? year[0] : null,
-        'YearTo': options.includes('2') ? year[1] : null
+        'YearFrom': options.includes('2') && year ? year[0] : null,
+        'YearTo': options.includes('2') && year ? year[1] : null
       }
       console.log(params)
       const baseURI = 'http://search.smano.ir/Search/search'
@@ -194,7 +214,8 @@ export default {
       this.overlay = true
 
       this.options = ["1"]
-      this.search_input = author
+      this.author_input = author
+      this.search_input = ''
 
       let params = {
         'Title': null,
@@ -248,7 +269,7 @@ export default {
   height: 34px;
 }
 .smaller .mdi-menu-down{
-  margin-bottom: 7px;
+  margin-bottom: 11px;
 }
 
 .dp__theme_light {
